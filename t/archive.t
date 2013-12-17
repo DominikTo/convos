@@ -1,11 +1,11 @@
 use Test::More;
 use File::Temp qw/tempdir/;
 
-use_ok('WebIrc::Core::Archive');
+use_ok('Convos::Core::Archive');
 my $log_dir = tempdir(CLEANUP => 0);
 ok(-d $log_dir, 'Created a log directory correctly');
-my $archive = WebIrc::Core::Archive->new(log_dir => $log_dir);
-isa_ok($archive, 'WebIrc::Core::Archive', 'Right class');
+my $archive = Convos->new(log_dir => $log_dir);
+isa_ok($archive, 'Convos::Core::Archive', 'Right class');
 {
   $archive->write(
     {

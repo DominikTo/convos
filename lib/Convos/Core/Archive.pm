@@ -3,7 +3,7 @@ package Convos::Core::Archive;
 use Mojo::Home;
 use Carp qw/croak/;
 
-use WebIrc::Core::Util qw/format_time/;
+use Convos::Core::Util qw/format_time/;
 
 use File::Path qw/make_path/;
 
@@ -29,7 +29,7 @@ Path to write logs in
 =cut
 
 has 'log_dir' => sub {
-  Mojo::Home->new->detect('WebIrc')->rel_dir('irc_logs');
+  Mojo::Home->new->detect('Convos')->rel_dir('irc_logs');
 };
 
 =head2 es_url
@@ -54,7 +54,7 @@ User Agent for ES communication
 has ua => sub { Mojo::UserAgent->new };
 
 
-=head2 path
+=head2 paths
 
 Current log path. Automatically generated through irc message.
 
@@ -75,7 +75,7 @@ sub search {
   my $self = shift;
 }
 
-=head1 write
+=head2 write
 
   $self->write($data)
 
@@ -90,12 +90,13 @@ sub write {
     $self->ua->put($self->es_url->path('/wirc/messages') , json => $message);
   }
   my $path = sprintf('%s/%s/%s/%s',
-    $self->log_dir, $message->{cid}, $message->{target},
+    $self->log_dir, $message->{server}, $message->{target},
     format_time($ts, '/%Y/%m/'));
   make_path($path) unless $self->paths->{$path}++;
   $path .= format_time($ts, '%d.log');
   croak qq{Can't open log file "$path": $!}
     unless open my $handle, '>>', $path;
+    $message->{nick} //= '[nick_missing]';
   print($handle sprintf(
       "%s :%s!%s@%s %s\n",
       format_time($ts, '%H:%M:%S'),
