@@ -48,12 +48,13 @@ L</irc_err_bannedfromchan>, l</irc_error> and L</irc_quit>.
 
 use Mojo::Base -base;
 use Mojo::IRC;
-use Mojo::JSON 'j';
 no warnings 'utf8';
 use IRC::Utils;
 use Parse::IRC ();
 use Scalar::Util ();
 use Time::HiRes qw/ time /;
+use WebIrc::Core::Archive;
+
 use Convos::Core::Util qw/ as_id id_as /;
 use constant DEBUG => $ENV{CONVOS_DEBUG} ? 1 : 0;
 use constant UNITTEST => $INC{'Test/More.pm'} ? 1 : 0;
@@ -89,6 +90,8 @@ Holds a L<Mojo::Log> object.
 =cut
 
 has log => sub { Mojo::Log->new };
+
+has archive => sub { WebIrc::Core::Archive->new() };
 
 my @ADD_MESSAGE_EVENTS        = qw/ irc_privmsg /;
 my @ADD_SERVER_MESSAGE_EVENTS = qw/
@@ -817,7 +820,12 @@ sub _publish {
   }
   if($data->{save}) {
     if ($data->{target}) {
+<<<<<<< HEAD:lib/WebIrc/Core/Connection.pm
+      $self->archive->write($data);
+      $self->redis->zadd("user:$login:connection:$host:$data->{target}:msg", $data->{timestamp}, $message);
+=======
       $self->redis->zadd("$self->{path}:$data->{target}:msg", $data->{timestamp}, $message);
+>>>>>>> master:lib/Convos/Core/Connection.pm
     }
     else {
       $self->redis->zadd("$self->{path}:msg", $data->{timestamp}, $message);
