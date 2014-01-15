@@ -49,7 +49,7 @@ unless ($ENV{LIVE_DATABASE}) {
 
   is $finish, 1,  'finished';
   is $err,    '', 'no error';
-  is redis_do(get => 'convos:version'), '0.3005', 'convos:version is set';
+  is redis_do(get => 'convos:version'), '0.41', 'convos:version is set';
 }
 
 {    # v0_3002
@@ -88,7 +88,7 @@ unless ($ENV{LIVE_DATABASE}) {
 
   is_deeply(
     redis_do(hgetall => 'user:jhthorsen'),
-    {email => 'jhthorsen@cpan.org', avatar => 'jhthorsen@cpan.org',},
+    {email => 'jhthorsen@cpan.org', avatar => 'jhthorsen@cpan.org', admin => 1},
     'set avatar email to user email',
   );
 }

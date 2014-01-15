@@ -75,7 +75,7 @@ Mojo::Util::monkey_patch(
     [
       qw(
         scard connections
-        set convos:version 0.3005
+        set convos:version 0.41
         )
     ],
     'redis commands on --yes',
