@@ -182,7 +182,8 @@ See L<Convos::Core::Util/logf>.
 
   $redis = $self->redis;
 
-Returns a L<Mojo::Redis> object.
+Returns a L<Mojo::Redis> object. This object is cached either in
+the application object or the controller object during a request.
 
 =cut
 
