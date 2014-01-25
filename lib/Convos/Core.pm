@@ -40,24 +40,35 @@ Holds a L<Mojo::Redis> object.
 
 =cut
 
-has log   => sub { Mojo::Log->new };
-has redis => sub { Mojo::Redis->new };
+has log     => sub { Mojo::Log->new };
+has redis   => sub { Mojo::Redis->new };
+has _events => sub { shift->redis->subscribe('convos:core:events') };
 
 =head1 METHODS
 
 =head2 control
 
-  $self->control($command, $cb);
+  $self->control(remove => $login => $name, $cb);
+  $self->control(restart => $login => $name, $cb);
+  $self->control(start => $login => $name, $cb);
+  $self->control(stop => $login => $name, $cb);
 
 Used to issue a control command.
+
+See also L</ctrl_remove>, L</ctrl_stop>, L</ctrl_restart> and L</ctrl_start>.
 
 =cut
 
 sub control {
-  my ($self, @args) = @_;
-  my $cb = pop @args;
+  my $self = shift;
+  my $cb   = pop @_;
+  my $cmd  = join ':', @_;
 
-  $self->redis->lpush('core:control', join(':', @args), $cb);
+  # Don't need to clean up message event callback,
+  # since the _events object does not last very long.
+  Scalar::Util::weaken($self);
+  $self->_events->on(message => sub { $self->$cb($1) if $_[1] =~ /^$cmd:(.*)/ });
+  $self->redis->lpush('core:control', $cmd);
   $self;
 }
 
@@ -370,27 +381,76 @@ sub delete_connection {
   );
 }
 
+=head2 ctrl_remove
+
+  $self->ctrl_stop($login, $name);
+
+Disconnect and remove a connection and delete related connection data from
+database.
+
+=cut
+
+sub ctrl_remove {
+  my ($self, $login, $name) = @_;
+  my $conn  = $self->{connections}{$login}{$name};
+  my $redis = $self->redis;
+
+  Scalar::Util::weaken($self);
+  Mojo::IOLoop->delay(
+    sub {
+      my ($delay) = @_;
+      return $conn->disconnect($delay->begin) if $conn;
+      return $delay->begin->();
+    },
+    sub {
+      my ($delay) = @_;
+      delete $self->{connections}{$login}{$name};
+      $redis->keys("user:$login:connection:$name*", $delay->begin);
+    },
+    sub {
+      my ($delay, $keys) = @_;
+      $redis->multi;
+      $redis->del($_) for @$keys;
+      $delay->begin($redis, int @$keys);
+      $redis->exec($delay->begin);
+    },
+    sub {
+      my ($delay, $n, @res) = @_;
+      my $success = @res == $n ? 1 : 0;
+      $self->redis->publish("convos:core:events" => "remove:$login:$name:$success");
+    },
+  );
+}
+
 =head2 ctrl_stop
 
-  $self->ctrl_stop($login, $server);
+  $self->ctrl_stop($login, $name);
 
 Stop a connection by connection id.
 
 =cut
 
 sub ctrl_stop {
-  my ($self, $login, $server) = @_;
+  my ($self, $login, $name) = @_;
 
   Scalar::Util::weaken($self);
 
-  if (my $conn = $self->{connections}{$login}{$server}) {
-    $conn->disconnect(sub { delete $self->{connections}{$login}{$server} });
+  if (my $conn = $self->{connections}{$login}{$name}) {
+    $conn->disconnect(
+      sub {
+        delete $self->{connections}{$login}{$name};
+        $self->redis->publish("convos:core:events" => "stop:$login:$name:1");
+      }
+    );
+  }
+  else {
+    $self->redis->publish("convos:core:events" => "stop:$login:$name:1");
   }
 }
 
 =head2 ctrl_restart
 
-  $self->ctrl_restart($login, $server);
+  $self->ctrl_restart($login, $name);
 
 Restart a connection by connection id.
 
@@ -398,20 +458,22 @@ Restart a connection by connection id.
 
 
 sub ctrl_restart {
-  my ($self, $login, $server) = @_;
+  my ($self, $login, $name) = @_;
 
   Scalar::Util::weaken($self);
 
-  if (my $conn = $self->{connections}{$login}{$server}) {
+  if (my $conn = $self->{connections}{$login}{$name}) {
     $conn->disconnect(
       sub {
-        delete $self->{connections}{$login}{$server};
-        $self->ctrl_start($login => $server);
+        delete $self->{connections}{$login}{$name};
+        $self->ctrl_start($login => $name);
+        $self->redis->publish("convos:core:events" => "restart:$login:$name");
       }
     );
   }
   else {
-    $self->ctrl_start($login => $server);
+    $self->ctrl_start($login => $name);
+    $self->redis->publish("convos:core:events" => "restart:$login:$name");
   }
 }
 
@@ -424,6 +486,7 @@ Start a single connection by connection id.
 sub ctrl_start {
   my ($self, $login, $name) = @_;
   $self->_connection(login => $login, name => $name)->connect;
+  $self->redis->publish("convos:core:events" => "start:$login:$name:1");
 }
 
 =head2 login
