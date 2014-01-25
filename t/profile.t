@@ -45,4 +45,23 @@ redis_do(
     ->element_exists('form input[name="avatar"][value="fbusername"]');
 }
 
+{
+  diag 'delete profile';
+
+  Mojo::IOLoop->timer(
+    0.05 => sub {
+      redis_do(publish => 'convos:core:events' => 'remove:doe:magnet:0');
+    }
+  );
+  $t->post_ok('/profile/delete')->status_is(200)
+    ->text_is('div.error', 'Could not remove all connections. Please try again.');
+
+  Mojo::IOLoop->timer(
+    0.05 => sub {
+      redis_do(publish => 'convos:core:events' => 'remove:doe:magnet:1');
+    }
+  );
+  $t->post_ok('/profile/delete')->status_is(302)->header_like(Location => qr{:\d+/$});
+}
+
 done_testing;
