@@ -30,7 +30,7 @@ sub redis_do {
   $redis ||= $t->app->redis;
   return $redis unless @_;
   $redis->execute(@_, $delay->begin);
-  $delay->wait;
+  $delay->wait unless Mojo::IOLoop->is_running;
 }
 
 sub wait_a_bit {

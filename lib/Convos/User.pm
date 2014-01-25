@@ -205,6 +205,71 @@ sub register {
   );
 }
 
+=head2 remove
+
+This will remove all user data and log the user out.
+
+=cut
+
+sub remove {
+  my $self  = shift->render_later;
+  my $core  = $self->app->core;
+  my $login = $self->session('login') or return $self->redirect_to('/');
+  my $redis = $self->redis('fresh');
+
+  $self->stash(txn_redis => $redis);
+
+  my $error = sub {
+    $self->req->method('GET');
+    $self->stash(error => $_[0], template => 'user/edit');
+    $self->edit;
+  };
+
+  Mojo::IOLoop->delay(
+    sub {
+      my ($delay) = @_;
+      $redis->smembers("user:$login:connections", $delay->begin);
+    },
+    sub {
+      my ($delay, $connections) = @_;
+
+      $core->control(remove => $login => $_, $delay->begin) for @$connections;
+    },
+    sub {
+      my ($delay, @removed) = @_;
+
+      unless (@removed == grep {$_} @removed) {
+        return $error->('Could not remove all connections. Please try again.');
+      }
+
+      $redis->multi;
+      $redis->del("user:$login");
+      $redis->del("user:$login:cid_target");
+      $redis->del("user:$login:cmd_history");
+      $redis->del("user:$login:connections");
+      $redis->del("user:$login:conversations");
+      $redis->del("user:$login:notifications");
+      $redis->exec($delay->begin);
+    },
+    sub {
+      my ($delay, @deleted) = @_;
+      $redis->get("user:$login", $delay->begin);
+    },
+    sub {
+      my ($delay, $profile) = @_;
+
+      $profile or return $self->logout;    # success
+      $self->connection_list($delay->begin);
+      $self->conversation_list($delay->begin) if $self->stash('full_page');
+      $self->notification_list($delay->begin) if $self->stash('full_page');
+    },
+    sub {
+      my ($delay) = @_;
+      $error->('Could not delete profile. Please try again.');
+    },
+  );
+}
+
 =head2 logout
 
 Will delete data from session.

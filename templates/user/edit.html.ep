@@ -1,9 +1,9 @@
 % title 'Edit user';
 % stash sidebar => 'convos';
+% my $err;
 <ul class="with-sidebar">
   <li>
     <h2>Edit profile</h2>
-    % my $err;
     %= form_for 'user.edit', method => 'post', class => 'horizontal', begin
       <div class="form-group email">
         <label for="email">Email</label>
@@ -28,5 +28,21 @@
       <p class="help">Profile saved.</p>
       % }
     % end
+  </li>
+  <li>
+    <div class="hidden"><!-- Not sure if this is the right place to have delete account -->
+    <h2>Delete account</h2>
+    <p>
+      WARNING! This action will delete your account, conversation logs and
+      shut down connections.
+    </p>
+  % if($err = stash 'error') {
+    <div class="error"><%= $err %></div>
+  % }
+    %= form_for 'user.delete', method => 'post', class => 'horizontal', begin
+      Are you sure you want to delete your account?
+      <button type="submit" class="danger">Yes, delete my account</button>
+    % end
+    </div>
   </li>
 </ul>

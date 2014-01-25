@@ -314,6 +314,7 @@ sub _private_routes {
   $r->any('/network/:name/edit')->to('connection#edit_network')->name('network.edit');
   $r->get('/oembed')->to('oembed#generate', layout => undef)->name('oembed');
   $r->any('/profile')->to('user#edit')->name('user.edit');
+  $r->post('/profile/delete')->to('user#remove')->name('user.remove');
   $r->get('/wizard')->to('connection#wizard')->name('wizard');
 
   $network_r = $r->route('/:network');
