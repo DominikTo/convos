@@ -180,23 +180,31 @@ See L<Convos::Core::Util/logf>.
 
 =head2 redis
 
-  $redis = $self->redis('fresh');
   $redis = $self->redis;
 
-Returns a L<Mojo::Redis> object. Use "fresh" if you want a new connection.
-This is useful if you want to run transactions.
+Returns a L<Mojo::Redis> object.
 
 =cut
 
 sub redis {
   my $c = shift;
+  my $cache_to = $c->{tx} ? 'stash' : sub { $c->app->defaults };
 
-  if (@_ and $_[0] eq 'fresh') {
-    return _new_redis_connection($c);
-  }
-  else {
-    return $c->stash->{redis} ||= _new_redis_connection($c);
-  }
+  $c->$cache_to->{redis} ||= do {
+    my $log = $c->app->log;
+    my $redis = Mojo::Redis->new(server => $c->config->{redis});
+
+    $redis->on(
+      error => sub {
+        my ($redis, $err) = @_;
+        $log->error('[REDIS ERROR] ' . $err);
+      }
+    );
+
+    $redis;
+  };
+
+  $c;
 }
 
 =head2 notification_list
@@ -344,23 +352,6 @@ sub register {
   $app->helper(send_partial   => \&send_partial);
   $app->helper(timestamp_span => \&timestamp_span);
   $app->helper(redirect_last  => \&redirect_last);
-}
-
-# not a method
-# $redis = _new_redis_connection($c);
-sub _new_redis_connection {
-  my $c     = shift;
-  my $log   = $c->app->log;
-  my $redis = Mojo::Redis->new(server => $c->config->{redis});
-
-  $redis->on(
-    error => sub {
-      my ($redis, $err) = @_;
-      $log->error('[REDIS ERROR] ' . $err);
-    }
-  );
-
-  $redis;
 }
 
 =head1 AUTHOR
