@@ -2,6 +2,7 @@ use Test::More;
 use Test::Mojo;
 use File::Basename qw( basename );
 use Mojolicious::Plugin::AssetPack;
+use t::Helper ();
 
 {
   my $ap = Mojolicious::Plugin::AssetPack->new;
@@ -15,10 +16,7 @@ my $t = Test::Mojo->new('Convos');
 my $css;
 
 {
-  $t->get_ok('/login')
-    ->status_is(200)
-    ->element_exists(q(link[rel="stylesheet"][href^="/packed/main-"]))
-    ;
+  $t->get_ok('/login')->status_is(200)->element_exists(q(link[rel="stylesheet"][href^="/packed/main-"]));
 
   $css = $t->tx->res->dom->at(q(link[rel="stylesheet"]))->{href};
   like $css, qr{^/packed/main-\w+\.css$}, 'got production convos.css';
@@ -29,7 +27,7 @@ SKIP: {
   $t->get_ok($css)->status_is(200);
   -d $packed or skip "Cannot look into $packed", 2;
   opendir(my $PACKED, $packed);
-  my @packed = sort grep { /main-\w+\.css$/ } readdir $PACKED;
+  my @packed = sort grep {/main-\w+\.css$/} readdir $PACKED;
   is $packed[0], basename($css), 'found main.css file';
   is @packed, 1, 'found one packed convos file';
 }

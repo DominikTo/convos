@@ -16,19 +16,12 @@ no warnings "utf8";
 use Mojo::Log;
 use Mojo::UserAgent;
 use Parse::IRC ();
-use Unicode::UTF8;
+use Unicode::UTF8 'decode_utf8';
 use Time::Piece;
 
-my $hostname;
-
 our $SERVER_NAME_RE = qr{(?:\w+\.[^:/]+|localhost|loopback):?\d*};
-our $URL_RE = do {
-  # Modified regex from RFC 3986
-  no warnings; # Possible attempt to put comments
-  qw!https?:(//([^/?\#\s]*))?([^?\#\s]*)(\?([^\#\s]*))?(\#(\S+))?!;
-};
 
-our @EXPORT_OK = qw( as_id id_as hostname logf format_time $URL_RE $SERVER_NAME_RE );
+our @EXPORT_OK = qw( as_id id_as logf format_time $SERVER_NAME_RE );
 
 =head1 FUNCTIONS
 
@@ -45,13 +38,11 @@ It will convert non-word characters to ":hex" and join C<@str> with ":00".
 
 sub as_id {
   join ':00', map {
-    local $_ = $_; # local $_ is for changing constants and not changing input
+    local $_ = $_;    # local $_ is for changing constants and not changing input
     s/:/:3a/g;
-    s/([^\w:])/{ sprintf ':%02x', ord $1 }/ge;
+    s/([^\w:-])/{ sprintf ':%02x', ord $1 }/ge;
     $_;
-  } grep {
-    length $_;
-  } @_;
+  } grep { length $_; } @_;
 }
 
 =head2 id_as
@@ -69,24 +60,6 @@ sub id_as {
   } split /:00/, $_[0];
 }
 
-=head2 hostname
-
-  $hostname = hostname();
-
-Returns the public domain name for the current hostname or fall back on "localhost".
-
-=cut
-
-sub hostname {
-  $hostname ||= do {
-    use IO::Socket::INET;
-    use Socket;
-    $ENV{PUBLIC_IP} ||= Mojo::UserAgent->new->get('http://icanhazip.com')->res->body;
-    $ENV{PUBLIC_IP} =~ s/\s//g;
-    +(gethostbyaddr inet_aton($ENV{PUBLIC_IP}), AF_INET)[0] || 'localhost';
-  };
-}
-
 =head2 logf
 
   $c->logf($level => $format, @args);
@@ -98,18 +71,18 @@ Used to log more complex datastructures and to prevent logging C<undef>.
 
 sub logf {
   use Data::Dumper;
-  my($self, $level, $format, @args) = @_;
+  my ($self, $level, $format, @args) = @_;
   my $log = $self->{app}{log} || $self->{log} || Mojo::Log->new;
 
   local $Data::Dumper::Maxdepth = 2;
-  local $Data::Dumper::Indent = 0;
-  local $Data::Dumper::Terse = 1;
+  local $Data::Dumper::Indent   = 0;
+  local $Data::Dumper::Terse    = 1;
 
   for my $arg (@args) {
-    if(ref($arg) =~ /^\w+$/) {
+    if (ref($arg) =~ /^\w+$/) {
       $arg = Dumper($arg);
     }
-    elsif(!defined $arg) {
+    elsif (!defined $arg) {
       $arg = '__UNDEF__';
     }
   }
@@ -124,10 +97,10 @@ sub logf {
 =cut
 
 sub format_time {
-  my $date = localtime shift;
+  my $date   = localtime shift;
   my $format = shift;
 
-  return $date->strftime($format);
+  return decode_utf8($date->strftime($format));
 }
 
 =head1 AUTHOR
