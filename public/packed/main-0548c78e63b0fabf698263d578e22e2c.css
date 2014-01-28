@@ -133,7 +133,8 @@ footer {
   position: fixed;
   bottom: 0; }
   footer form {
-    position: relative; }
+    position: relative;
+    display: none; }
     footer form input {
       font-family: inherit;
       font-size: 1.1em;
@@ -191,7 +192,6 @@ ol {
 dl dt {
   width: 220px;
   float: left;
-  clear: left;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap; }
@@ -213,7 +213,8 @@ dl dd {
   float: right;
   cursor: pointer;
   font-size: 1.3em;
-  padding: 3px; }
+  padding: 5px;
+  line-height: 0.4em; }
 
 div.question {
   padding: 0.5em;
@@ -221,7 +222,7 @@ div.question {
   -webkit-border-radius: 3px;
   border-radius: 3px; }
 
-div.question {
+div.question, li.info {
   background: #def;
   color: #158;
   border: 1px solid #bde; }
@@ -233,6 +234,9 @@ div.question .button {
 div.question .button.confirm {
   background: #aad4ff;
   border: 2px solid #900; }
+
+a.active {
+  background-color: #e6e6e6; }
 
 /*
  * Form elements
@@ -247,22 +251,22 @@ form {
   form input[readonly] {
     background: #f6f6f6;
     color: #666; }
-  form .selectize-input, form .selectize-control.single .selectize-input.focus, form input, form select {
+  form .selectize-input, form input, form select {
     background: #fff;
-    padding: 4px;
-    font-size: 1.1em;
+    font-size: 14px;
     outline: none;
     border: 2px solid #ccc;
+    padding: 4px;
     width: 290px;
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
     border-radius: 3px; }
-  form input[type="checkbox"] {
-    width: auto; }
   form .selectize-input {
     padding: 2px; }
   form .selectize-input.focus, form input:focus {
     border: 2px solid #a6a6a6; }
+  form input[type="checkbox"] {
+    width: auto; }
   form input.field-with-error, form select.field-with-error {
     border-color: #d5000d; }
   form div.actions {
@@ -306,16 +310,6 @@ form.horizontal input.field-with-error, form.horizontal select.field-with-error 
   form.horizontal div.actions, form.horizontal p.help, form.horizontal p.error {
     margin-left: 0; } }
 
-form.predefined .help, form.predefined div.password, form.predefined div.tls {
-  display: none; }
-form.predefined .selectize-control .selectize-input > div, form.predefined .selectize-input, form.predefined input, form.predefined select {
-  background: transparent;
-  border: 0; }
-form.predefined a.edit-mode {
-  padding-left: 4px;
-  color: #595959;
-  text-decoration: none; }
-
 form.edit-mode a.edit-mode {
   display: none; }
 
@@ -331,7 +325,6 @@ button, .button {
   border-radius: 3px; }
 
 button {
-  height: 2em;
   vertical-align: baseline; }
 
 button:active, button.active, .button:active, .button.active {
@@ -356,9 +349,6 @@ hr {
   -moz-border-radius: 3px;
   -webkit-border-radius: 3px;
   border-radius: 3px; }
-
-.selectize-input.full {
-  background-color: #f2f2f2; }
 
 .selectize-input.dropdown-active::before {
   content: ' ';
@@ -673,7 +663,7 @@ nav.bar {
     color: #666; }
   nav.bar a.conversations.toggler {
     display: none; }
-  nav.bar a.nicks.toggler {
+  nav.bar a.sidebar.toggler {
     display: none; }
   nav.bar .right {
     background: #fafafa;
@@ -694,7 +684,7 @@ nav.bar {
       font-weight: normal; }
     nav.bar .right a.notifications.toggler.alert b {
       color: #b22; }
-    nav.bar .right a.hidden, nav.bar .right a.logout {
+    nav.bar .right a.hidden {
       display: none; }
   nav.bar a.active, nav.bar a:hover, nav.bar a:active {
     background-color: #d9d9d9;
@@ -712,9 +702,10 @@ div.notification.question {
   div.notification.question button, div.notification.question .button {
     font-size: 0.9em; }
 
+div.add-conversation.container,
 div.conversations.container,
 div.notifications.container,
-div.nicks.container {
+div.sidebar.container {
   background: #f8f8f8;
   position: fixed;
   top: 39px;
@@ -726,27 +717,84 @@ div.nicks.container {
   display: none;
   border: 1px solid #d9d9d9;
   border-top-width: 6px; }
+  div.add-conversation.container h3, div.add-conversation.container a,
+  div.conversations.container h3,
   div.conversations.container a,
+  div.notifications.container h3,
   div.notifications.container a,
-  div.nicks.container a {
+  div.sidebar.container h3,
+  div.sidebar.container a {
     color: #000;
     text-decoration: none;
     padding: 4px;
     display: block; }
-  div.conversations.container a:hover, div.conversations.container a:active, div.conversations.container a:focus,
+  div.add-conversation.container h3,
+  div.conversations.container h3,
+  div.notifications.container h3,
+  div.sidebar.container h3 {
+    font-size: 1em;
+    margin: 0; }
+  div.add-conversation.container button.inactive, div.add-conversation.container a.inactive,
+  div.conversations.container button.inactive,
+  div.conversations.container a.inactive,
+  div.notifications.container button.inactive,
+  div.notifications.container a.inactive,
+  div.sidebar.container button.inactive,
+  div.sidebar.container a.inactive {
+    color: #999999; }
+  div.add-conversation.container ul ul li a, div.add-conversation.container ul ul li button,
+  div.conversations.container ul ul li a,
+  div.conversations.container ul ul li button,
+  div.notifications.container ul ul li a,
+  div.notifications.container ul ul li button,
+  div.sidebar.container ul ul li a,
+  div.sidebar.container ul ul li button {
+    background-image: url(../image/fa-caret-right.png);
+    background-position: 9px 50%;
+    background-repeat: no-repeat;
+    font-size: 0.9em;
+    height: 2em;
+    padding: 2px 2px 2px 20px;
+    border: 0; }
+  div.add-conversation.container a:hover, div.add-conversation.container a:active, div.add-conversation.container a:focus,
+  div.conversations.container a:hover,
+  div.conversations.container a:active,
+  div.conversations.container a:focus,
   div.notifications.container a:hover,
   div.notifications.container a:active,
   div.notifications.container a:focus,
-  div.nicks.container a:hover,
-  div.nicks.container a:active,
-  div.nicks.container a:focus {
+  div.sidebar.container a:hover,
+  div.sidebar.container a:active,
+  div.sidebar.container a:focus {
+    background-color: #e1e1e1;
     color: #000;
-    background-color: #f2f2f2;
     outline: 0; }
+  div.add-conversation.container a:focus, div.add-conversation.container button:focus,
   div.conversations.container a:focus,
+  div.conversations.container button:focus,
   div.notifications.container a:focus,
-  div.nicks.container a:focus {
+  div.notifications.container button:focus,
+  div.sidebar.container a:focus,
+  div.sidebar.container button:focus {
     background-color: #ebebeb; }
+
+div.sidebar.container button {
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  display: block;
+  overflow: visible;
+  /* shrinkwrap the text in <IE7 */
+  cursor: pointer;
+  -moz-user-select: text; }
+div.sidebar.container button:hover, div.sidebar.container button:focus {
+  background-color: #e1e1e1;
+  color: #000; }
+
+div.add-conversation.container {
+  padding-left: 3px;
+  padding-bottom: 6px;
+  height: auto; }
 
 div.conversations.container li.unread a {
   color: #aa0000; }
@@ -763,7 +811,7 @@ div.notifications.container span.message {
   overflow: hidden; }
 
 @media (min-width: 700px) {
-  div.nicks.container {
+  div.sidebar.container {
     background: #f3f3f3;
     border: 0;
     border-left: 1px solid #ddd;
@@ -774,12 +822,10 @@ div.notifications.container span.message {
     bottom: -1px;
     right: 0;
     z-index: 2; }
-    div.nicks.container a {
+    div.sidebar.container h3, div.sidebar.container a {
       text-decoration: none;
       display: block;
-      padding: 4px 8px; }
-    div.nicks.container a:hover {
-      background: #e1e1e1; } }
+      padding: 4px 8px; } }
 div.messages {
   padding-top: 45px; }
   div.messages li {
@@ -842,68 +888,42 @@ div.messages {
   div.messages li.message-error h3 {
     color: #333;
     font-style: italic; }
-  div.messages li.message-error, div.messages li.server-message.error {
+  div.messages li.message-error, div.messages li.network-message.error {
     background: #ffa2a8; }
   div.messages li.nick-change, div.messages li.nick-joined, div.messages li.nick-parted, div.messages li.nick-quit, div.messages li.notice, div.messages li.topic, div.messages li.whois {
     background-color: #f9f7fa;
     color: #888; }
   div.messages li.nick-change .content b, div.messages li.nick-parted .content b, div.messages li.nick-quit .content b {
     font-weight: normal; }
-  div.messages li.welcome,
-  div.messages li.setting {
-    overflow: visible; }
-    div.messages li.welcome form > div, div.messages li.welcome div.content, div.messages li.welcome h3,
-    div.messages li.setting form > div,
-    div.messages li.setting div.content,
-    div.messages li.setting h3 {
-      clear: left;
-      margin: 2px 0 2px 90px; }
-    div.messages li.welcome label,
-    div.messages li.setting label {
-      float: left;
-      margin-left: -90px;
-      margin-top: 4px; }
-    div.messages li.welcome input, div.messages li.welcome button, div.messages li.welcome .button, div.messages li.welcome .selectize-input, div.messages li.welcome .selectize-control.single .selectize-input.focus,
-    div.messages li.setting input,
-    div.messages li.setting button,
-    div.messages li.setting .button,
-    div.messages li.setting .selectize-input,
-    div.messages li.setting .selectize-control.single .selectize-input.focus {
-      font-size: 1em; }
-    div.messages li.welcome p.help,
-    div.messages li.setting p.help {
-      display: inline; }
 
-body.with-nick-list ul.conversations li.first a, body.without-nick-list ul.conversations li.first a, body.historic ul.conversations li.first a {
-  background-color: #f2f2f2;
-  color: #000;
-  font-weight: bold; }
-
-body.with-nick-list div.messages {
-  margin-right: 180px; }
-  body.with-nick-list div.messages li.highlight {
-    background: #fee; }
-body.with-nick-list footer form {
-  margin-right: 180px; }
-
-body.settings div.nicks.container, body.historic div.nicks.container {
-  display: none; }
-body.settings footer, body.historic footer {
-  display: none; }
-body.settings div.clear, body.historic div.clear {
-  height: 20px; }
-
-body.settings nav.bar .right a.logout {
+body.chat footer form {
   display: block; }
-body.settings li.notice {
-  background-color: transparent;
-  color: inherit; }
-  body.settings li.notice div.content {
-    font-family: monospace;
-    font-size: 0.8em;
-    line-height: 1.1em;
-    max-width: 100%;
-    margin-left: 0; }
+body.chat ul.conversations li.first a {
+  background-color: #f2f2f2;
+  font-weight: bold;
+  color: #000; }
+
+body.convos a.convos {
+  background-color: #f2f2f2; }
+body.convos footer form {
+  display: block; }
+
+body.without-sidebar div.sidebar.container {
+  display: none; }
+
+body.with-sidebar footer form {
+  margin-right: 180px; }
+body.with-sidebar div.messages {
+  margin-right: 180px; }
+  body.with-sidebar div.messages li.highlight {
+    background: #fee; }
+
+body.historic div.sidebar.container {
+  display: none; }
+body.historic footer {
+  display: none; }
+body.historic div.clear {
+  height: 20px; }
 
 div.goto-bottom a {
   display: none;
@@ -970,18 +990,18 @@ div.footer {
   div.messages {
     margin-right: 0; }
 
-  body.with-nick-list nav.bar a.nicks.toggler {
+  body.with-sidebar nav.bar a.sidebar.toggler {
     display: block; }
-  body.with-nick-list div.messages, body.with-nick-list footer form {
+  body.with-sidebar div.messages, body.with-sidebar footer form {
     margin-right: 0; }
-  body.with-nick-list div.nicks.container {
+  body.with-sidebar div.sidebar.container {
     display: none; }
 
-  body.with-nick-list div.wrapper,
-  body.without-nick-list div.wrapper {
+  body.with-sidebar div.wrapper,
+  body.without-sidebar div.wrapper {
     margin-bottom: -42px; }
-    body.with-nick-list div.wrapper div.clear,
-    body.without-nick-list div.wrapper div.clear {
+    body.with-sidebar div.wrapper div.clear,
+    body.without-sidebar div.wrapper div.clear {
       height: 42px; }
 
   footer {
@@ -1002,7 +1022,6 @@ div.footer {
 
   dl dt {
     float: none;
-    clear: left;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap; }
@@ -1064,12 +1083,6 @@ a [class*=" icon-"] {
 
 /*  Font Awesome uses the Unicode Private Use Area (PUA) to ensure screen
     readers do not read off random characters that represent icons */
-.icon-user:before {
-  content: "\f021"; }
-
-.icon-cog:before {
-  content: "\f022"; }
-
 .icon-info-sign:before {
   content: "\f023"; }
 
@@ -1079,8 +1092,17 @@ a [class*=" icon-"] {
 .icon-comments:before {
   content: "\f025"; }
 
+.icon-bullhorn:before {
+  content: "\f027"; }
+
 .icon-signout:before {
   content: "\f026"; }
 
-.icon-bullhorn:before {
-  content: "\f027"; }
+.icon-user:before {
+  content: "\f021"; }
+
+.icon-cog:before {
+  content: "\f022"; }
+
+body.chat nav .icon-cog:before {
+  content: "\f021"; }
