@@ -68,7 +68,7 @@ Mojo::Util::monkey_patch(
     \@redis_cmd,
     [
       qw(
-        scard connections
+        dbsize
         set convos:version 0.3005
         )
     ],

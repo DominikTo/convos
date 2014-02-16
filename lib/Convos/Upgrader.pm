@@ -112,20 +112,28 @@ sub running_latest {
   Mojo::IOLoop->delay(
     sub {
       my ($delay) = @_;
-      $self->redis->scard('connections', $delay->begin);
+      $self->redis->dbsize($delay->begin);
+      $self->redis->get('convos:version', $delay->begin);
     },
     sub {
-      my ($delay, $existing) = @_;
-      $existing and return $self->redis->get('convos:version', $delay->begin);
+      my ($delay, $dbsize, $version) = @_;
+      if (!$version && $dbsize && $ENV{CONVOS_DEFAULT_URL}) {
+        $self->log(
+          'Database seems to contain existings keys, set CONVOS_REDIS_URL manually if you are sure you want to use this database'
+        );
+        exit;
+      }
 
-      # nothing to upgrade, but let us insert defaults
-      $self->steps($self->_build_steps(0));
-      $self->_next(sub { $self->steps([]); $self->$cb(1); });
-    },
-    sub {
-      my ($delay, $version) = @_;
-      $self->steps($self->_build_steps($version || 0));
-      $self->$cb(@{$self->steps} ? 0 : 1);
+      if ($version) {
+        $self->steps($self->_build_steps($version));
+        $self->$cb(@{$self->steps} ? 0 : 1);
+      }
+      else {
+        # Insert defaults
+        $self->steps($self->_build_steps(0));
+        $self->_next(sub { $self->steps([]); $self->$cb(1); });
+      }
+
     },
   );
 

@@ -258,8 +258,9 @@ sub startup {
     $self->log->warn("redis url from config file will be deprecated. Run 'perldoc Convos' for alternative setup.");
     $ENV{CONVOS_REDIS_URL} = $config->{redis};
   }
-  if (!$ENV{CONVOS_REDIS_URL} and $self->mode eq 'production') {
+  if (!$ENV{CONVOS_REDIS_URL}) {
     $ENV{CONVOS_REDIS_URL} = 'redis://127.0.0.1:6379/1';
+    $ENV{CONVOS_DEFAULT_URL}++;
     $self->log->info("Using default CONVOS_REDIS_URL=$ENV{CONVOS_REDIS_URL}");
   }
 
