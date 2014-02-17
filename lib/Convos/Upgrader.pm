@@ -121,6 +121,7 @@ sub running_latest {
         $self->log(
           'Database seems to contain existings keys, set CONVOS_REDIS_URL manually if you are sure you want to use this database'
         );
+        $self->$cb(0);
         exit;
       }
 
